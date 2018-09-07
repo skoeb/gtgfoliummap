@@ -11,7 +11,7 @@ How to add countries to the Greening the Grid map, a simple guide for the novice
 4) commit changes to github
     
 if getting errors: make sure country names/spelling are consistent with 'allcountries.geojson', 
-check the google sheet for setting errors: https://docs.google.com/spreadsheets/d/1-Hh_36BxhGH2TgKMuZvfj1nHCyIx1rSQ3CqAOc2fm74/edit?usp=sharing
+check the google sheet for spelling errors: https://docs.google.com/spreadsheets/d/1-Hh_36BxhGH2TgKMuZvfj1nHCyIx1rSQ3CqAOc2fm74/edit?usp=sharing
 
 """
 
@@ -20,9 +20,9 @@ import pandas as pd
 import os
 
 #set working directory to github folder, change if on mac / other computer
-os.chdir("/Users/skoebric/Dropbox/GitHub/GtG-Where-We-Work/scripts")
+os.chdir("/Users/skoebric/Dropbox/GitHub/gtgfoliummap/geometry/")
 
-allcountriesjson = "/Users/skoebric/Dropbox/GitHub/GtG-Where-We-Work/geometry/allcountries.geojson"
+allcountriesjson = "/Users/skoebric/Dropbox/GitHub/gtgfoliummap/geometry/world.geojson"
 
 #opens the json with outlines of all countries, creates 'dump' which contains a list of all countries geography/properties
 openfile = open(allcountriesjson, 'r')
@@ -45,7 +45,7 @@ whereweworkindexed = df.set_index('Country')
 whereweworkindexed['Name'] = whereweworkindexed.index
 #whereweworkdictlist = wherewework.to_dict(orient = 'records')
 
-pilotprojects = list(whereweworkindexed[whereweworkindexed['Assistance Type'] == 'Technical assistance partnership']['Name'])
+projects = list(whereweworkindexed['Name'])
 #otherbens = list(whereweworkindexed[whereweworkindexed['Assistance Type'] == 'Other Assistance']['Name'])
 #%%     
 #create 'whereweworkout' with the geography and properties for each country in lists
@@ -55,8 +55,8 @@ for x in dump:
 #        y = whereweworkindexed.loc[x['properties']['name']].dropna()
 #        x['properties'] = y.to_dict()
 #        whereweworkout.append(x)
-    if (x['properties']['name']) in pilotprojects:
-        y = whereweworkindexed.loc[x['properties']['name']].dropna()
+    if (x['properties']['NAME']) in projects:
+        y = whereweworkindexed.loc[x['properties']['NAME']].dropna()
         x['properties'] = y.to_dict()
         whereweworkout.append(x)
 
@@ -67,7 +67,7 @@ outdict = {"type": "FeatureCollection",
 
 
 #save the pilotprojectsout list to the 'wherewework.geojson' file
-outfile = "/Users/skoebric/Dropbox/GitHub/GtG-Where-We-Work/geometry/wherewework.geojson"
+outfile = "/Users/skoebric/Dropbox/GitHub/gtgfoliummap/geometry/wherewework.geojson"
 with open(outfile, 'w') as outpath:
     json.dump(outdict, outpath)
 
