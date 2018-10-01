@@ -35,7 +35,7 @@ CSVURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkObK4sgJUYpz4XfHS3KG
 import requests
 import io
 
-data = requests.get(CSVURL)
+data = requests.get(CSVURL, verify = False)
 df = pd.read_csv(io.StringIO(data.text))
 
 #%%
@@ -72,4 +72,24 @@ with open(outfile, 'w') as outpath:
     json.dump(outdict, outpath)
 
 
+#%%
+import folium
+import subprocess
+import webbrowser
+import sys
+from folium import plugins
 
+
+json = "/Users/skoebric/Dropbox/GitHub/gtgfoliummap/geometry/wherewework.geojson"
+
+m = folium.Map(width = '100%', height = 800, location = (20,5),zoom_start = 3,
+               no_wrap=True,max_bounds=True, min_zoom=3, tiles="MapBox Bright")
+plugins.ScrollZoomToggler().add_to(m)
+tt = folium.GeoJsonTooltip(['Name','Toolkit'], aliases = ['Country','Toolkits'])
+style_function = lambda x: {'fillColor': '#73ad02',
+                            'color': '#73ad02',
+                            'weight':1,
+                            }
+
+folium.GeoJson(json, tooltip = tt, name = 'json', style_function = style_function, highlight_function = style_function).add_to(m)
+m.save("/Users/skoebric/Dropbox/GitHub/gtgfoliummap/index.html")
