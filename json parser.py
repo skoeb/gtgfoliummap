@@ -81,15 +81,27 @@ from folium import plugins
 
 
 json = "/Users/skoebric/Dropbox/GitHub/gtgfoliummap/geometry/wherewework.geojson"
+all_json = gpd.read_file(json)
 
 m = folium.Map(width = '100%', height = 800, location = (20,5),zoom_start = 3,
                no_wrap=True,max_bounds=True, min_zoom=3, tiles="MapBox Bright")
-plugins.ScrollZoomToggler().add_to(m)
-tt = folium.GeoJsonTooltip(['Name','Toolkit'], aliases = ['Country','Toolkits'])
+
 style_function = lambda x: {'fillColor': '#73ad02',
                             'color': '#73ad02',
                             'weight':1,
                             }
 
-folium.GeoJson(json, tooltip = tt, name = 'json', style_function = style_function, highlight_function = style_function).add_to(m)
+def countryjsoner(row):
+    country = row['Name']
+    tk = row['Toolkit']
+    link = row['Link']
+    row_ = all_json.loc[all_json['Name'] == country]
+    geojson = folium.GeoJson(row_, highlight_function = style_function, style_function = style_function)
+    popup = folium.Popup(f"<b>Country:</b> {country}<br>"
+                         f"<b>Toolkit:</b> {tk}<br>"
+                         f'<a href="{link}" target="_blank"> Click For Country Page </a>')
+    popup.add_to(geojson)
+    geojson.add_to(m)
+
+all_json.apply(countryjsoner, axis = 1)
 m.save("/Users/skoebric/Dropbox/GitHub/gtgfoliummap/index.html")
