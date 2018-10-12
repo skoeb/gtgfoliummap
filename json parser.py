@@ -29,6 +29,13 @@ openfile = open(allcountriesjson, 'r')
 json_input = json.load(openfile)
 dump = json_input['features']
 
+listofallcountrynames = []
+for x in dump:
+    try:
+        listofallcountrynames.append(x['properties']['NAME'])
+    except KeyError:
+        listofallcountrynames.append('error')
+
 #%%
 #pulls csv from static google sheet location, passes it to df
 CSVURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkObK4sgJUYpz4XfHS3KG8teVYY6aWCO-efLM6Qrk0GkP_MNmsx5MLTcSo0QDRhlorEr1GSvp7Mc2F/pub?gid=0&single=true&output=csv"
@@ -51,10 +58,6 @@ projects = list(whereweworkindexed['Name'])
 #create 'whereweworkout' with the geography and properties for each country in lists
 whereweworkout = []
 for x in dump:
-#    if (x['properties']['name']) in otherbens:
-#        y = whereweworkindexed.loc[x['properties']['name']].dropna()
-#        x['properties'] = y.to_dict()
-#        whereweworkout.append(x)
     if (x['properties']['NAME']) in projects:
         y = whereweworkindexed.loc[x['properties']['NAME']].dropna()
         x['properties'] = y.to_dict()
@@ -74,10 +77,8 @@ with open(outfile, 'w') as outpath:
 
 #%%
 import folium
-import subprocess
-import webbrowser
-import sys
 from folium import plugins
+import geopandas as gpd
 
 
 json = "/Users/skoebric/Dropbox/GitHub/gtgfoliummap/geometry/wherewework.geojson"
@@ -85,6 +86,8 @@ all_json = gpd.read_file(json)
 
 m = folium.Map(width = '100%', height = 800, location = (20,5),zoom_start = 3,
                no_wrap=True,max_bounds=True, min_zoom=3, tiles="MapBox Bright")
+
+plugins.ScrollZoomToggler().add_to(m)
 
 style_function = lambda x: {'fillColor': '#73ad02',
                             'color': '#73ad02',
