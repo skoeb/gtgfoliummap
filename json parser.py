@@ -20,12 +20,12 @@ import pandas as pd
 import os
 
 #set working directory to github folder, change if on mac / other computer
-os.chdir("/Users/skoebric/Dropbox/GitHub/gtgfoliummap/geometry/")
+os.chdir(r"C:\Users\tbowen\Documents\Website - Greening the Grid\Where we work\Sam Maps Repo\gtgfoliummap")
 
-allcountriesjson = "/Users/skoebric/Dropbox/GitHub/gtgfoliummap/geometry/world.geojson"
+allcountriesjson = r"C:\Users\tbowen\Documents\Website - Greening the Grid\Where we work\Sam Maps Repo\gtgfoliummap\geometry\world.geojson"
 
 #opens the json with outlines of all countries, creates 'dump' which contains a list of all countries geography/properties
-openfile = open(allcountriesjson, 'r')
+openfile = open(allcountriesjson, 'r', encoding='utf-8')
 json_input = json.load(openfile)
 dump = json_input['features']
 
@@ -70,7 +70,7 @@ outdict = {"type": "FeatureCollection",
 
 
 #save the pilotprojectsout list to the 'wherewework.geojson' file
-outfile = "/Users/skoebric/Dropbox/GitHub/gtgfoliummap/geometry/wherewework.geojson"
+outfile = r"C:\Users\tbowen\Documents\Website - Greening the Grid\Where we work\Sam Maps Repo\gtgfoliummap\geometry\wherewework.geojson"
 with open(outfile, 'w') as outpath:
     json.dump(outdict, outpath)
 
@@ -81,7 +81,7 @@ from folium import plugins
 import geopandas as gpd
 
 
-json = "/Users/skoebric/Dropbox/GitHub/gtgfoliummap/geometry/wherewework.geojson"
+json = r"C:\Users\tbowen\Documents\Website - Greening the Grid\Where we work\Sam Maps Repo\gtgfoliummap\geometry\wherewework.geojson"
 all_json = gpd.read_file(json)
 
 m = folium.Map(width = '100%', height = 800, location = (20,5),zoom_start = 3,
@@ -107,4 +107,4 @@ def countryjsoner(row):
     geojson.add_to(m)
 
 all_json.apply(countryjsoner, axis = 1)
-m.save("/Users/skoebric/Dropbox/GitHub/gtgfoliummap/index.html")
+m.save(r"C:\Users\tbowen\Documents\Website - Greening the Grid\Where we work\Sam Maps Repo\gtgfoliummap\index.html")
