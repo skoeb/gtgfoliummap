@@ -9,32 +9,23 @@ How to add countries to the Greening the Grid map, a simple guide for the novice
 2) update 'os.chdir' below to represent the path to the github project folder on your computer
 3) run this script!
 4) commit changes to github
-    
-if getting errors: make sure country names/spelling are consistent with 'allcountries.geojson', 
+
+if getting errors: make sure country names/spelling are consistent with 'allcountries.geojson',
 check the google sheet for spelling errors: https://docs.google.com/spreadsheets/d/1-Hh_36BxhGH2TgKMuZvfj1nHCyIx1rSQ3CqAOc2fm74/edit?usp=sharing
 
 """
 
 import json
 import pandas as pd
-import os
+import geopandas as gpd
 
-#set working directory to github folder, change if on mac / other computer
-os.chdir(r"C:\Users\tbowen\Documents\Website - Greening the Grid\Where we work\Sam Maps Repo\gtgfoliummap")
+allcountriesjson = "geometry/world.geojson"
 
-allcountriesjson = r"C:\Users\tbowen\Documents\Website - Greening the Grid\Where we work\Sam Maps Repo\gtgfoliummap\geometry\world.geojson"
+allcountries = gpd.read_file(allcountriesjson)
 
-#opens the json with outlines of all countries, creates 'dump' which contains a list of all countries geography/properties
-openfile = open(allcountriesjson, 'r', encoding='utf-8')
-json_input = json.load(openfile)
-dump = json_input['features']
-
-listofallcountrynames = []
-for x in dump:
-    try:
-        listofallcountrynames.append(x['properties']['NAME'])
-    except KeyError:
-        listofallcountrynames.append('error')
+allcountries.loc[allcountries['ADMIN'] == 'Brunei', 'ADMIN'] = 'Brunei Darussalam'
+allcountries.loc[allcountries['ADMIN'] == 'Myanmar', 'ADMIN'] = 'Burma'
+allcountries.loc[allcountries['ADMIN'] == 'Kyrgyzstan', 'ADMIN'] = 'Kyrgyz Republic'
 
 #%%
 #pulls csv from static google sheet location, passes it to df
@@ -43,68 +34,106 @@ import requests
 import io
 
 data = requests.get(CSVURL, verify = False)
-df = pd.read_csv(io.StringIO(data.text))
+csvdf = pd.read_csv(io.StringIO(data.text))
+csvdf = csvdf.rename({'Country':'ADMIN'}, axis = 'columns')
 
 #%%
-#checks the df and creates two lists, one for 'pilot projects', one for 'other assistance'
-#and one dict 'whereweworkdictlist' with a list of properties for each 
-whereweworkindexed = df.set_index('Country')
-whereweworkindexed['Name'] = whereweworkindexed.index
-#whereweworkdictlist = wherewework.to_dict(orient = 'records')
-
-projects = list(whereweworkindexed['Name'])
-#otherbens = list(whereweworkindexed[whereweworkindexed['Assistance Type'] == 'Other Assistance']['Name'])
-#%%     
-#create 'whereweworkout' with the geography and properties for each country in lists
-whereweworkout = []
-for x in dump:
-    if (x['properties']['NAME']) in projects:
-        y = whereweworkindexed.loc[x['properties']['NAME']].dropna()
-        x['properties'] = y.to_dict()
-        whereweworkout.append(x)
+#merge geodata with google sheet data
+countrygdf = pd.merge(allcountries[['ADMIN', 'geometry']], csvdf, on = ['ADMIN'], how = 'inner')
+countrygdf = countrygdf.fillna('missing')
 
 #%%
-#export geojson
-outdict = {"type": "FeatureCollection",
-                     "features":whereweworkout}
 
-
-#save the pilotprojectsout list to the 'wherewework.geojson' file
-outfile = r"C:\Users\tbowen\Documents\Website - Greening the Grid\Where we work\Sam Maps Repo\gtgfoliummap\geometry\wherewework.geojson"
-with open(outfile, 'w') as outpath:
-    json.dump(outdict, outpath)
+#test to make sure all geometries mapped
+if len(csvdf) != len(countrygdf):
+    for i in list(csvdf['ADMIN']):
+        if i not in list(countrygdf['ADMIN']):
+            print(i, 'not found in gdf!')
 
 
 #%%
+
+def countryjsoner(row):
+    country = row['ADMIN']
+
+    introtext = f"The USAID-NREL Partnership is actively working in {country} through the following toolkits: \n"
+
+    platformtext = '<ul>'
+    if row['Greening The Grid Link'] != 'missing':
+        link = row['Greening The Grid Link']
+        text = row['Greening The Grid Link Name']
+        platformtext += f"<li><a href='{link}' target='_blank'> {text} </a></li>\n"
+    if row['RE Explorer Link'] != 'missing':
+        link = row['RE Explorer Link']
+        text = row['RE Explorer Link Name']
+        platformtext += f"<li><a href='{link}' target='_blank'> {text} </a></li>\n"
+    if row['I-JEDI Link'] != 'missing':
+        link = row['I-JEDI Link']
+        text = row['I-JEDI Link Name']
+        platformtext += f"<li><a href='{link}' target='_blank'> {text} </a></li>\n"
+    if row['Resilient Energy Platform Link'] != 'missing':
+        link = row['Resilient Energy Platform Link']
+        text = row['Resilient Energy Platform Link Name']
+        platformtext += f"<li><a href='{link}' target='_blank'> {text} </a></li>\n"
+
+    platformtext = platformtext[:-2]
+    platformtext += '</ul>'
+
+    row_ = countrygdf.loc[countrygdf['ADMIN'] == country]
+    geojson = folium.GeoJson(row_, highlight_function = style_function, style_function = style_function)
+    popup = folium.Popup(f"{introtext}<br>"
+                         "<br>"
+                         f"{platformtext}", max_width=300)
+    popup.add_to(geojson)
+    geojson.add_to(layer)
+
+
 import folium
 from folium import plugins
-import geopandas as gpd
 
-
-json = r"C:\Users\tbowen\Documents\Website - Greening the Grid\Where we work\Sam Maps Repo\gtgfoliummap\geometry\wherewework.geojson"
-all_json = gpd.read_file(json)
 
 m = folium.Map(width = '100%', height = 800, location = (20,5),zoom_start = 3,
                no_wrap=True,max_bounds=True, min_zoom=3, tiles="MapBox Bright")
 
 plugins.ScrollZoomToggler().add_to(m)
 
-style_function = lambda x: {'fillColor': '#73ad02',
-                            'color': '#73ad02',
-                            'weight':1,
-                            }
+layer = folium.FeatureGroup(name='countries', show = True)
 
-def countryjsoner(row):
-    country = row['Name']
-    tk = row['Toolkit']
-    link = row['Link']
-    row_ = all_json.loc[all_json['Name'] == country]
-    geojson = folium.GeoJson(row_, highlight_function = style_function, style_function = style_function)
-    popup = folium.Popup(f"<b>Country:</b> {country}<br>"
-                         f"<b>Toolkit:</b> {tk}<br>"
-                         f'<a href="{link}" target="_blank"> Click For Country Page </a>')
-    popup.add_to(geojson)
-    geojson.add_to(m)
+style_function = lambda feature: {
+                       'fillColor': '#0077C8',
+                       'fillOpacity' : 0.7,
+                       'color': '#000000',
+                       'weight':0.2
+                       }
 
-all_json.apply(countryjsoner, axis = 1)
-m.save(r"C:\Users\tbowen\Documents\Website - Greening the Grid\Where we work\Sam Maps Repo\gtgfoliummap\index.html")
+countrygdf.apply(countryjsoner, axis = 1)
+
+m.add_child(layer)
+
+m.save("index.html")
+
+##%%
+#m = folium.Map(width = '100%', height = 800, location = (20,5),zoom_start = 3,
+#               no_wrap=True,max_bounds=True, min_zoom=3, tiles="MapBox Bright")
+#
+#plugins.ScrollZoomToggler().add_to(m)
+#
+#style_function = lambda x: {'fillColor': '#73ad02',
+#                            'color': '#73ad02',
+#                            'weight':1,
+#                            }
+#
+#def countryjsoner(row):
+#    country = row['Name']
+#    tk = row['Toolkit']
+#    link = row['Link']
+#    row_ = all_json.loc[all_json['Name'] == country]
+#    geojson = folium.GeoJson(row_, highlight_function = style_function, style_function = style_function)
+#    popup = folium.Popup(f"<b>Country:</b> {country}<br>"
+#                         f"<b>Toolkit:</b> {tk}<br>"
+#                         f'<a href="{link}" target="_blank"> Click For Country Page </a>')
+#    popup.add_to(geojson)
+#    geojson.add_to(m)
+#
+#all_json.apply(countryjsoner, axis = 1)
+#m.save("index.html")
