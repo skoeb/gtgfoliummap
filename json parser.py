@@ -100,7 +100,7 @@ plugins.ScrollZoomToggler().add_to(m)
 layer = folium.FeatureGroup(name='countries', show = True)
 
 style_function = lambda feature: {
-                       'fillColor': '#0077C8',
+                       'fillColor': '#005DA3',
                        'fillOpacity' : 0.7,
                        'color': '#000000',
                        'weight':0.2
