@@ -76,14 +76,16 @@ def countryjsoner(row):
         text = row['Resilient Energy Platform Link Name']
         platformtext += f"<li><a href='{link}' target='_blank'> {text} </a></li>\n"
 
-    platformtext = platformtext[:-2]
+#    platformtext = platformtext[:-2]
     platformtext += '</ul>'
 
     row_ = countrygdf.loc[countrygdf['ADMIN'] == country]
     geojson = folium.GeoJson(row_, highlight_function = style_function, style_function = style_function)
-    popup = folium.Popup(f"{introtext}<br>"
+    popup = folium.Popup("<font size='+1'>"
+                        f"{introtext}<br>"
                          "<br>"
-                         f"{platformtext}", max_width=300)
+                         f"{platformtext}"
+                         "</font>", max_width=300)
     popup.add_to(geojson)
     geojson.add_to(layer)
 
