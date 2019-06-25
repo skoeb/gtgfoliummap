@@ -95,7 +95,7 @@ from folium import plugins
 
 
 m = folium.Map(width = '100%', height = 800, location = (20,5),zoom_start = 3,
-               no_wrap=True,max_bounds=True, min_zoom=3, tiles="MapBox Bright")
+               no_wrap=True,max_bounds=True, min_zoom=3)
 
 plugins.ScrollZoomToggler().add_to(m)
 
